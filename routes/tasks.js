@@ -52,3 +52,18 @@ router.put("/markAsCompleted/:_id", async (req, res) => {
   }
 });
 
+// UPDATE actualizar solo el titulo
+
+router.put("/id/:_id", async (req, res) => {
+  try {
+    const task = await Task.findByIdAndUpdate(
+      req.params._id,
+      { title: req.body.title },
+      { new: true },
+    );
+    res.send(task);
+  } catch (error) {
+    res.status(500).send({ message: "Error al actualizar el título" });
+  }
+});
+
