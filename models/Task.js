@@ -14,3 +14,5 @@ const TaskSchema = new mongoose.Schema({
 // el timestamp nos va a generar createdAt y updatedAt automáticamente
 
 const Task = mongoose.model("Task", TaskSchema)
+
+module.exports = Task;

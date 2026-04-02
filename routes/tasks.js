@@ -1,81 +1,109 @@
-// lógica de rutas y controladores donde usaremos Router de Express
-
 const express = require("express");
 const router = express.Router();
 const Task = require("../models/Task");
 
-// CREATE crea una tarea
+router.get("/test", (req, res) => {
+  res.send({ message: "¡El servidor funciona correctamente!" });
+});
+
+// POST - Crear una tarea
 router.post("/create", async (req, res) => {
   try {
     const task = await Task.create(req.body);
     res.status(201).send(task);
   } catch (error) {
-    res.status(400).send({ message: "Error al crear la tarea", error });
+    console.error("Error detallado:", error);
+    res.status(400).send({
+      message: "Error al crear la tarea",
+      error: error.message,
+    });
   }
 });
 
-// READ obtiene todas las tareas
-
+// GET - Obtener todas las tareas
 router.get("/", async (req, res) => {
   try {
-    const tasks = await Task.find();
+    // .sort() para traer las más nuevas primero (gracias a timestamps: true)
+    const tasks = await Task.find().sort({ createdAt: -1 });
     res.status(200).send(tasks);
   } catch (error) {
     res.status(500).send({ message: "Error al obtener las tareas" });
   }
 });
 
-// READ obtener tarea por id
-
+// GET - Obtener tarea por id
 router.get("/id/:_id", async (req, res) => {
   try {
     const task = await Task.findById(req.params._id);
-    if (!task) return res.status(404).send({ message: "Tarea no encontrada" });
+    if (!task) {
+      return res.status(404).send({ message: "Tarea no encontrada" });
+    }
     res.send(task);
   } catch (error) {
-    res.status(500).send({ message: "ID no válido" });
+    // CastError ocurre cuando el ID no tiene el formato de MongoDB
+    if (error.name === "CastError") {
+      return res.status(400).send({ message: "Formato de ID no válido" });
+    }
+    res.status(500).send({ message: "Error interno del servidor" });
   }
 });
 
-// UPDATE marcar como completada
-
+// PUT - Marcar como completada
 router.put("/markAsCompleted/:_id", async (req, res) => {
   try {
     const task = await Task.findByIdAndUpdate(
       req.params._id,
       { completed: true },
-      { new: true }, // retorna doc actualizado
+      { new: true, runValidators: true }, // runValidators asegura que se respeten las reglas del Schema
     );
+
+    if (!task)
+      return res
+        .status(404)
+        .send({ message: "No se encontró la tarea para actualizar" });
+
     res.send(task);
   } catch (error) {
-    res.status(500).send({ message: "Error al actualizar la tarea" });
+    res.status(500).send({ message: "Error al actualizar el estado" });
   }
 });
 
-// UPDATE actualizar solo el titulo
-
+// PUT - Actualizar solo el título
 router.put("/id/:_id", async (req, res) => {
   try {
+    const { title } = req.body;
+    if (!title)
+      return res.status(400).send({ message: "El nuevo título es necesario" });
+
     const task = await Task.findByIdAndUpdate(
       req.params._id,
-      { title: req.body.title },
-      { new: true },
+      { title },
+      { new: true, runValidators: true },
     );
+
+    if (!task) return res.status(404).send({ message: "Tarea no encontrada" });
+
     res.send(task);
   } catch (error) {
     res.status(500).send({ message: "Error al actualizar el título" });
   }
 });
 
-// DELETE eliminar tarea
-
+// DELETE - Eliminar tarea
 router.delete("/id/:_id", async (req, res) => {
   try {
-    await Task.findByIdAndDelete(req.params._id);
-    res.send({ message: "Tarea eliminada correctamente" });
+    const task = await Task.findByIdAndDelete(req.params._id);
+
+    if (!task) {
+      return res
+        .status(404)
+        .send({ message: "La tarea que intentas borrar no existe" });
+    }
+
+    res.send({ message: "Tarea eliminada correctamente", task });
   } catch (error) {
-    res.status(500).send({ message: "Error al eliminar tarea" });
+    res.status(500).send({ message: "Error al eliminar la tarea" });
   }
 });
 
-module.exports =  router;
+module.exports = router;
