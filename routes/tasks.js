@@ -10,7 +10,7 @@ router.post("/create", async (req, res) => {
     const task = await Task.create(req.body);
     res.status(201).send(task);
   } catch (error) {
-    res.status(400).send({ message: "Error al crear la tarea".error });
+    res.status(400).send({ message: "Error al crear la tarea", error });
   }
 });
 
