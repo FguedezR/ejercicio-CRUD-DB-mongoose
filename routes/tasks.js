@@ -38,3 +38,17 @@ router.get("/id/:_id", async (req, res) => {
 });
 
 // UPDATE marcar como completada
+
+router.put("/markAsCompleted/:_id", async (req, res) => {
+  try {
+    const task = await Task.findByIdAndUpdate(
+      req.params._id,
+      { completed: true },
+      { new: true }, // retorna doc actualizado
+    );
+    res.send(task);
+  } catch (error) {
+    res.status(500).send({ message: "Error al actualizar la tarea" });
+  }
+});
+
