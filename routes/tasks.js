@@ -67,3 +67,15 @@ router.put("/id/:_id", async (req, res) => {
   }
 });
 
+// DELETE eliminar tarea
+
+router.delete("/id/:_id", async (req, res) => {
+  try {
+    await Task.findByIdAndDelete(req.params._id);
+    res.send({ message: "Tarea eliminada correctamente" });
+  } catch (error) {
+    res.status(500).send({ message: "Error al eliminar tarea" });
+  }
+});
+
+module.exports = { router };
